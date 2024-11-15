@@ -6,8 +6,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.JavaUtil;
 
-@TeleOp(name = "mecanumdrivemiscERW (Blocks to Java)")
-public class mecanumdrivemiscERW extends LinearOpMode {
+@TeleOp(name = "mainTeleop (Blocks to Java)")
+public class mainTeleop extends LinearOpMode {
 
   private Servo claw_servo;
   private DcMotor frontRightMotor;
@@ -19,12 +19,14 @@ public class mecanumdrivemiscERW extends LinearOpMode {
   private DcMotor extend_arm_motor;
 
   double claw_servo_speed;
+  double extend_arm_speed = 1.0;
+  double arm_rotate_speed = 1.0;
 
   /**
    * This function is executed when this Op Mode is selected from the Driver Station.
    */
-  @Override
-  public void runOpMode() {
+  @Override //THIS DOESN'T MATTER DON'T EVEN LOOOK AT IT!
+  public void runOpMode() { //This function is what is running when the op mode is running
     claw_servo = hardwareMap.get(Servo.class, "claw_servo");
     frontRightMotor = hardwareMap.get(DcMotor.class, "frontRightMotor");
     backRightMotor = hardwareMap.get(DcMotor.class, "backRightMotor");
@@ -34,6 +36,9 @@ public class mecanumdrivemiscERW extends LinearOpMode {
     raise_arm_motor = hardwareMap.get(DcMotor.class, "raise_arm_motor");
     extend_arm_motor = hardwareMap.get(DcMotor.class, "extend_arm_motor");
 
+
+
+    //Plae value for arm move speed here
     // Put initialization blocks here
     // Initiaize Claw Servo Position
     claw_servo.setPosition(0);
@@ -75,7 +80,7 @@ public class mecanumdrivemiscERW extends LinearOpMode {
   /**
    * Describe this function...
    */
-  private void rotate_arm() {
+  private void rotate_arm() { //TODO:MODIFY THIS FOR SLOWMODE
     // Use gamepad A and Y to rasie and lower arm
     if (gamepad2.a) {
       rotate_arm_motor.setPower(1);
@@ -90,7 +95,7 @@ public class mecanumdrivemiscERW extends LinearOpMode {
   /**
    * Describe this function...
    */
-  private void move_robot() {
+  private void move_robot() { //modify this function
     float y;
     double x;
     float rx;
@@ -114,12 +119,35 @@ public class mecanumdrivemiscERW extends LinearOpMode {
   /**
    * Describe this function...
    */
-  private void raise_arm() {
+  //Use variable to set speed of arm motor here
+  private void raise_arm() { //modify this function
+    /*
+    int slowModeFactor = 1;
+    if right bumper is pressed:
+        slowModeFactor = 0.5;
+    else:
+        slowModeFactor = 1.0;
+
+
+    */
+    
+    
+    double slowModeFactor = 1.0;
+
+    if (gamepad2.right_bumper) {
+      slowModeFactor = 0.5;
+    }
+    else {
+      slowModeFactor = 1;
+    }
+
     // Use gamepad DpadUp to rasie and DpadDown to lower arm
     if (gamepad2.dpad_up) {
-      raise_arm_motor.setPower(1);
-    } else if (gamepad2.dpad_down) {
-      raise_arm_motor.setPower(-1);
+      raise_arm_motor.setPower(arm_rotate_speed * slowModeFactor);
+    }
+
+    else if (gamepad2.dpad_down) {
+      raise_arm_motor.setPower(-arm_rotate_speed);
     } else {
       raise_arm_motor.setPower(0);
     }
@@ -129,12 +157,13 @@ public class mecanumdrivemiscERW extends LinearOpMode {
   /**
    * Describe this function...
    */
-  private void extend_arm() {
+  //USE VARIABLE for extend arm speed here instead of integer values
+  private void extend_arm() { //modify this function to use the extend arm speed variable in set power functions
     // Use gamepad DpadRight to extend and DpadLeft retract arm
     if (gamepad2.dpad_left) {
-      extend_arm_motor.setPower(1);
+      extend_arm_motor.setPower(extend_arm_speed);
     } else if (gamepad2.dpad_right) {
-      extend_arm_motor.setPower(-1);
+      extend_arm_motor.setPower(-extend_arm_speed);
     } else {
       extend_arm_motor.setPower(0);
     }

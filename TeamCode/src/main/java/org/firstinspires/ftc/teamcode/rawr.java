@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -13,6 +14,7 @@ public class rawr extends LinearOpMode {
    * This function is executed when this OpMode is selected from the Driver Station.
    */
   @Override
+  @Disabled
   public void runOpMode() {
     double count = 0;
 
