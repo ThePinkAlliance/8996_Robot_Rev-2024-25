@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 @TeleOp(name = "ArmMotorERW (Blocks to Java)")
+@Disabled
 public class ArmMotorERW extends LinearOpMode {
 
   private DcMotor arm;
@@ -18,7 +19,6 @@ public class ArmMotorERW extends LinearOpMode {
    * Stopped).
    */
   @Override
-  @Disabled
   public void runOpMode() {
     double Speed;
 

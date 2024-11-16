@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 
 @TeleOp(name = "rawr (Blocks to Java)")
+@Disabled
 public class rawr extends LinearOpMode {
 
   private ColorSensor color_sensor;
@@ -14,7 +15,6 @@ public class rawr extends LinearOpMode {
    * This function is executed when this OpMode is selected from the Driver Station.
    */
   @Override
-  @Disabled
   public void runOpMode() {
     double count = 0;
 
