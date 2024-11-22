@@ -1,10 +1,15 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OldOpModes;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "BasicOpMode (Blocks to Java)")
-public class BasicOpMode extends LinearOpMode {
+@TeleOp(name = "ArmMotorERW (Blocks to Java)")
+@Disabled
+public class ArmMotorERW extends LinearOpMode {
+
+  private DcMotor arm;
 
   /**
    * This sample contains the bare minimum Blocks for any regular OpMode. The 3 blue
@@ -15,12 +20,23 @@ public class BasicOpMode extends LinearOpMode {
    */
   @Override
   public void runOpMode() {
+    double Speed;
+
+    arm = hardwareMap.get(DcMotor.class, "armAsDcMotor");
+
     // Put initialization blocks here.
     waitForStart();
     if (opModeIsActive()) {
       // Put run blocks here.
       while (opModeIsActive()) {
         // Put loop blocks here.
+        if (gamepad1.b) {
+          Speed = 0.1;
+        } else {
+          Speed = 1;
+        }
+        arm.setPower(gamepad1.left_stick_y * Speed);
+        telemetry.addData("arm pow", gamepad1.left_stick_y);
         telemetry.update();
       }
     }

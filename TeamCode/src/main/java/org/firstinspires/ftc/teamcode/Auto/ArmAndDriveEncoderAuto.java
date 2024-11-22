@@ -27,13 +27,11 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.Auto;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
@@ -64,7 +62,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 @Autonomous(name="Drive By Encoder Auto", group="Auto")
 
-public class DriveByEncoderAuto extends LinearOpMode {
+public class ArmAndDriveEncoderAuto extends LinearOpMode {
 
     /* Declare OpMode members. */
     private DcMotor         leftFrontDrive   = null;
@@ -72,7 +70,8 @@ public class DriveByEncoderAuto extends LinearOpMode {
     private DcMotor         leftBackDrive   = null;
     private DcMotor         rightBackDrive   = null;
     private ElapsedTime     runtime = new ElapsedTime();
-
+    private DcMotor         extendArmMotor = null;
+    public DcMotor          raiseArmMotor  = null;
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
     // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
@@ -94,6 +93,8 @@ public class DriveByEncoderAuto extends LinearOpMode {
         rightFrontDrive = hardwareMap.get(DcMotor.class, "frontRightMotor");
         rightBackDrive = hardwareMap.get(DcMotor.class, "backRightMotor");
         leftBackDrive = hardwareMap.get(DcMotor.class, "backLeftMotor");
+        raiseArmMotor = hardwareMap.get(DcMotor.class, "raise_arm_motor");
+        extendArmMotor = hardwareMap.get(DcMotor.class, "extend_arm_motor");
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
@@ -121,7 +122,7 @@ public class DriveByEncoderAuto extends LinearOpMode {
         telemetry.update();
         // Wait for the game to start (driver presses START)
         waitForStart();
-
+        extendArmMotor.setPower(1.0);
         // Step through each leg of the path,
         // Note: Reverse movement is obtained by setting a negative distance (not speed)
         encoderDrive(DRIVE_SPEED,  40,  40, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
@@ -141,6 +142,55 @@ public class DriveByEncoderAuto extends LinearOpMode {
      *  2) Move runs out of time
      *  3) Driver stops the OpMode running.
      */
+
+    public void encoderRaiseArm(double speed,
+                             double inches, double rightInches,
+                             double timeoutS) {
+        int raiseArmTarget;
+
+        // Ensure that the OpMode is still active
+        if (opModeIsActive()) {
+
+            // Determine new target position, and pass to motor controller
+            raiseArmTarget = raiseArmMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
+
+            raiseArmMotor.setTargetPosition(raiseArmTarget);
+
+            // Turn On RUN_TO_POSITION
+            raiseArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+            // reset the timeout time and start motion.
+            runtime.reset();
+            raiseArmMotor.setPower(Math.abs(speed));
+
+            // keep looping while we are still active, and there is time left, and both motors are running.
+            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
+            // its target position, the motion will stop.  This is "safer" in the event that the robot will
+            // always end the motion as soon as possible.
+            // However, if you require that BOTH motors have finished their moves before the robot continues
+            // onto the next step, use (isBusy() || isBusy()) in the loop test.
+            while (opModeIsActive() &&
+                    (runtime.seconds() < timeoutS) &&
+                    (leftBackDrive.isBusy() && rightFrontDrive.isBusy() && leftFrontDrive.isBusy() && rightBackDrive.isBusy())) {
+
+                // Display it for the driver.
+                telemetry.addData("Running to",  " %7d", raiseArmTarget);
+                telemetry.addData("Currently at",  " at %7d",
+                        raiseArmMotor.getCurrentPosition());
+                telemetry.update();
+            }
+
+            // Stop all motion;
+            raiseArmMotor.setPower(0);
+
+            // Turn off RUN_TO_POSITION
+            raiseArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            sleep(250);   // optional pause after each move.
+        }
+
+    }
+
     public void encoderDrive(double speed,
                              double leftInches, double rightInches,
                              double timeoutS) {
@@ -207,4 +257,5 @@ public class DriveByEncoderAuto extends LinearOpMode {
             sleep(250);   // optional pause after each move.
         }
     }
+
 }
