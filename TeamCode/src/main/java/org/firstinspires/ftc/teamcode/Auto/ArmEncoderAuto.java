@@ -86,11 +86,11 @@ public class ArmEncoderAuto extends LinearOpMode {
     static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
                                                       (WHEEL_DIAMETER_INCHES * 3.1415);
     static final double     LIFT_SPEED             = 0.6;
-    static final double     EXTEND_SPEED           = 0.6;
-    static final double     ROTATE_SPEED           = 0.6;
-    static final double     MAX_EXTENSION = 80; //max length robot can extend arm to from initial length
-    static final double     MAX_ANGLE = 25; //max angle robot can rotate arm to from initial orientation  TODO: adjust this to actual value once known
-    static final double     MAX_LIFT = 20; //max distance robot can lift the arm to from initial position TODO: adjust this to actual value once known
+    static final double     EXTEND_SPEED           = 0.7;
+    static final double     ROTATE_SPEED           = 0.5;
+    static final double     MAX_EXTENSION = 65; //max length robot can extend arm to from initial length
+    static final double     MAX_ANGLE = 23; //max angle robot can rotate arm to from initial orientation  TODO: adjust this to actual value once known
+    static final double     MAX_LIFT = 18; //max distance robot can lift the arm to from initial position TODO: adjust this to actual value once known
     @Override
     public void runOpMode() {
         // Initialize the drive system variables.
