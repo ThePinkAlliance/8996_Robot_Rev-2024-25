@@ -35,45 +35,14 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/*
- * This OpMode illustrates the concept of driving a path based on encoder counts.
- * The code is structured as a LinearOpMode
- *
- * The code REQUIRES that you DO have encoders on the wheels,
- *   otherwise you would use: RobotAutoDriveByTime;
- *
- *  This code ALSO requires that the drive Motors have been configured such that a positive
- *  power command moves them forward, and causes the encoders to count UP.
- *
- *   The desired path in this example is:
- *   - Drive forward for 48 inches
- *   - Spin right for 12 Inches
- *   - Drive Backward for 24 inches
- *   - Stop and close the claw.
- *
- *  The code is written using a method called: encoderDrive(speed, leftInches, rightInches, timeoutS)
- *  that performs the actual movement.
- *  This method assumes that each movement is relative to the last stopping place.
- *  There are other ways to perform encoder based moves, but this method is probably the simplest.
- *  This code uses the RUN_TO_POSITION mode to enable the Motor controllers to generate the run profile
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this OpMode to the Driver Station OpMode list
- */
-
 @Autonomous(name="ArmEncoderAuto", group="Auto")
 
 public class ArmEncoderAuto extends LinearOpMode {
 
-    /* Declare OpMode members. */
-    private DcMotor         leftFrontDrive   = null;
-    private DcMotor         rightFrontDrive  = null;
-    private DcMotor         leftBackDrive   = null;
-    private DcMotor         rightBackDrive   = null;
     private ElapsedTime     runtime = new ElapsedTime();
     private DcMotor         extendArmMotor = null;
-    public DcMotor          raiseArmMotor  = null;
-    public DcMotor          rotateArmMotor = null;
+    private DcMotor         raiseArmMotor  = null;
+    private DcMotor         rotateArmMotor = null;
     // Calculate the COUNTS_PER_INCH for your specific drive train.
     // Go to your motor vendor website to determine your motor's COUNTS_PER_MOTOR_REV
     // For external drive gearing, set DRIVE_GEAR_REDUCTION as needed.
@@ -98,20 +67,12 @@ public class ArmEncoderAuto extends LinearOpMode {
         extendArmMotor = hardwareMap.get(DcMotor.class, "extend_arm_motor");
         rotateArmMotor = hardwareMap.get(DcMotor.class, "rotate_arm_motor");
         rotateArmMotor.setDirection(DcMotor.Direction.REVERSE);
-        // Send telemetry message to indicate successful Encoder reset
-        telemetry.addData("Starting at",  "%7d :%7d",
-                raiseArmMotor.getCurrentPosition(),
-                extendArmMotor.getCurrentPosition());
-        telemetry.update();
+
         // Wait for the game to start (driver presses START)
         waitForStart();
-        // Step through each leg of the path,
-        // Note: Reverse movement is obtained by setting a negative distance (not speed)
-//        encoderRaiseArm(LIFT_SPEED,  8, 5.0);  // S1: Forward 47 Inches with 5 Sec timeout
-        //
-        encoderRotateArm(ROTATE_SPEED,MAX_ANGLE,10.0);
-        encoderExtendArm(EXTEND_SPEED, MAX_EXTENSION, 10.0);
-        encoderRaiseArm(LIFT_SPEED,MAX_LIFT,10.0);
+        encoderMove(rotateArmMotor,ROTATE_SPEED,MAX_ANGLE,10.0);
+        encoderMove(extendArmMotor,EXTEND_SPEED, MAX_EXTENSION, 10.0);
+        encoderMove(raiseArmMotor, LIFT_SPEED,MAX_LIFT,10.0);
         telemetry.addData("Path", "Complete");
         telemetry.update();
         sleep(1000);  // pause to display final telemetry message.
@@ -125,146 +86,27 @@ public class ArmEncoderAuto extends LinearOpMode {
      *  2) Move runs out of time
      *  3) Driver stops the OpMode running.
      */
+    public void encoderMove(DcMotor motor, double speed, double inches, double timeoutS) {
+        int target;
 
-    public void encoderRaiseArm(double speed,
-                             double inches,
-                             double timeoutS) {
-        int raiseArmTarget;
-
-        // Ensure that the OpMode is still active
         if (opModeIsActive()) {
-
-            // Determine new target position, and pass to motor controller
-            raiseArmTarget = raiseArmMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-
-            raiseArmMotor.setTargetPosition(raiseArmTarget);
-
-            // Turn On RUN_TO_POSITION
-            raiseArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // reset the timeout time and start motion.
+            target = motor.getCurrentPosition() + (int) (inches * COUNTS_PER_INCH);
+            motor.setTargetPosition(target);
+            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             runtime.reset();
-            raiseArmMotor.setPower(Math.abs(speed));
+            motor.setPower(Math.abs(speed));
 
-            // keep looping while we are still active, and there is time left, and both motors are running.
-            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
-            // always end the motion as soon as possible.
-            // However, if you require that BOTH motors have finished their moves before the robot continues
-            // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            while (opModeIsActive() &&
-                    (runtime.seconds() < timeoutS) &&
-                    raiseArmMotor.isBusy()) {
-
-                // Display it for the driver.
-                telemetry.addData("Running to",  " %7d", raiseArmTarget);
-                telemetry.addData("Currently at",  " at %7d",
-                        raiseArmMotor.getCurrentPosition());
+            while (opModeIsActive() && runtime.seconds() < timeoutS && motor.isBusy()) {
+                telemetry.addData("Running to", "%7d", target);
+                telemetry.addData("Currently at", "%7d", motor.getCurrentPosition());
                 telemetry.update();
             }
 
-            // Stop all motion;
-            raiseArmMotor.setPower(0);
-
-            // Turn off RUN_TO_POSITION
-            raiseArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            sleep(250);   // optional pause after each move.
+            motor.setPower(0);
+            motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            sleep(250); // optional pause
         }
-
     }
-    public void encoderExtendArm(double speed,
-                                double inches,
-                                double timeoutS) {
-        int extendArmTarget;
 
-        // Ensure that the OpMode is still active
-        if (opModeIsActive()) {
-
-            // Determine new target position, and pass to motor controller
-            extendArmTarget = extendArmMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-
-            extendArmMotor.setTargetPosition(extendArmTarget);
-
-            // Turn On RUN_TO_POSITION
-            extendArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // reset the timeout time and start motion.
-            runtime.reset();
-            extendArmMotor.setPower(Math.abs(speed));
-
-            // keep looping while we are still active, and there is time left, and both motors are running.
-            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
-            // always end the motion as soon as possible.
-            // However, if you require that BOTH motors have finished their moves before the robot continues
-            // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            while (opModeIsActive() &&
-                    (runtime.seconds() < timeoutS) &&
-                    extendArmMotor.isBusy()) {
-
-                // Display it for the driver.
-                telemetry.addData("Running to",  " %7d", extendArmTarget);
-                telemetry.addData("Currently at",  " at %7d",
-                        extendArmMotor.getCurrentPosition());
-                telemetry.update();
-            }
-
-            // Stop all motion;
-            extendArmMotor.setPower(0);
-
-            // Turn off RUN_TO_POSITION
-            extendArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            sleep(250);   // optional pause after each move.
-        }
-
-    }
-    public void encoderRotateArm(double speed,
-                                 double inches,
-                                 double timeoutS) {
-        int rotateArmTarget;
-
-        // Ensure that the OpMode is still active
-        if (opModeIsActive()) {
-
-            // Determine new target position, and pass to motor controller
-            rotateArmTarget = rotateArmMotor.getCurrentPosition() + (int)(inches * COUNTS_PER_INCH);
-
-            rotateArmMotor.setTargetPosition(rotateArmTarget);
-
-            // Turn On RUN_TO_POSITION
-            rotateArmMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            // reset the timeout time and start motion.
-            runtime.reset();
-            rotateArmMotor.setPower(Math.abs(speed));
-
-            // keep looping while we are still active, and there is time left, and both motors are running.
-            // Note: We use (isBusy() && isBusy()) in the loop test, which means that when EITHER motor hits
-            // its target position, the motion will stop.  This is "safer" in the event that the robot will
-            // always end the motion as soon as possible.
-            // However, if you require that BOTH motors have finished their moves before the robot continues
-            // onto the next step, use (isBusy() || isBusy()) in the loop test.
-            while (opModeIsActive() &&
-                    (runtime.seconds() < timeoutS) &&
-                    rotateArmMotor.isBusy()) {
-
-                // Display it for the driver.
-                telemetry.addData("Running to",  " %7d", rotateArmTarget);
-                telemetry.addData("Currently at",  " at %7d",
-                        rotateArmMotor.getCurrentPosition());
-                telemetry.update();
-            }
-
-            // Stop all motion;
-            rotateArmMotor.setPower(0);
-
-            // Turn off RUN_TO_POSITION
-            rotateArmMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            sleep(250);   // optional pause after each move.
-        }
-
-    }
+}
 }
