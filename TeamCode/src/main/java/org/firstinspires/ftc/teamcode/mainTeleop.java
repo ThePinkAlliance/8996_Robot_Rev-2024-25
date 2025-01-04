@@ -17,11 +17,16 @@ public class mainTeleop extends LinearOpMode {
   private DcMotor backLeftMotor;
   private DcMotor raise_arm_motor;
   private DcMotor extend_arm_motor;
-
+  static final double     COUNTS_PER_MOTOR_REV    = 1440 ;    // eg: TETRIX Motor Encoder
+  static final double     DRIVE_GEAR_REDUCTION    = 1.0 ;     // No External Gearing.
+  static final double     WHEEL_DIAMETER_INCHES   = 4.0 ;     // For figuring circumference
+  static final double     COUNTS_PER_INCH         = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) /
+                                                    (WHEEL_DIAMETER_INCHES * 3.1415);
+  static final double     straightup_angle = 12; //max angle robot can rotate arm to from initial orientation
   double claw_servo_speed;
   double extend_arm_speed = 1.0;
   double arm_rotate_speed = 1.0;
-
+  public int straightup_postion = (int) (straightup_angle * COUNTS_PER_INCH);
   /**
    * This function is executed when this Op Mode is selected from the Driver Station.
    */
@@ -35,8 +40,7 @@ public class mainTeleop extends LinearOpMode {
     backLeftMotor = hardwareMap.get(DcMotor.class, "backLeftMotor");
     raise_arm_motor = hardwareMap.get(DcMotor.class, "raise_arm_motor");
     extend_arm_motor = hardwareMap.get(DcMotor.class, "extend_arm_motor");
-
-
+    straightup_postion += rotate_arm_motor.getCurrentPosition();
 
     //Plae value for arm move speed here
     // Put initialization blocks here
@@ -56,7 +60,7 @@ public class mainTeleop extends LinearOpMode {
       extend_arm();
       raise_arm();
       rotate_arm();
-      telemetry.addData("arm pos", 123);
+      telemetry.addData("arm pos", rotate_arm_motor.getCurrentPosition());
       telemetry.addData("claw pos", claw_servo.getPosition());
       telemetry.update();
     }
@@ -80,15 +84,24 @@ public class mainTeleop extends LinearOpMode {
   /**
    * Describe this function...
    */
-  private void rotate_arm() { //TODO:MODIFY THIS FOR SLOWMODE
+  private void rotate_arm() {
+    double slowModeFactor = 1.0;
+
+    if (gamepad2.right_bumper) {
+      slowModeFactor = 0.5;
+    }
+    else {
+      slowModeFactor = 1;
+    }
     // Use gamepad A and Y to rasie and lower arm
     if (gamepad2.a) {
-      rotate_arm_motor.setPower(1);
+      rotate_arm_motor.setPower(1 * slowModeFactor);
     } else if (gamepad2.y) {
-      rotate_arm_motor.setPower(-1);
+      rotate_arm_motor.setPower(-1 * slowModeFactor);
     } else {
       rotate_arm_motor.setPower(0);
     }
+
     // Keep arm servo position in valid range
   }
 
@@ -147,7 +160,7 @@ public class mainTeleop extends LinearOpMode {
     }
 
     else if (gamepad2.dpad_down) {
-      raise_arm_motor.setPower(-arm_rotate_speed);
+      raise_arm_motor.setPower(-arm_rotate_speed * slowModeFactor);
     } else {
       raise_arm_motor.setPower(0);
     }
@@ -160,6 +173,8 @@ public class mainTeleop extends LinearOpMode {
   //USE VARIABLE for extend arm speed here instead of integer values
   private void extend_arm() { //modify this function to use the extend arm speed variable in set power functions
     // Use gamepad DpadRight to extend and DpadLeft retract arm
+    if (rotate_arm_motor.getCurrentPosition() >= 1000)
+      return;
     if (gamepad2.dpad_left) {
       extend_arm_motor.setPower(extend_arm_speed);
     } else if (gamepad2.dpad_right) {
